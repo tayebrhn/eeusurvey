@@ -33,7 +33,8 @@ class Question(models.Model):
     question_id = models.IntegerField()
     question_type = models.CharField(max_length=20, choices=QUESTION_TYPES)
     question_text = models.TextField()
-    category = models.CharField(max_length=100)
+    # category = models.CharField(max_length=100)
+    category = models.ForeignKey(QuestionCategory,related_name="question",on_delete=models.CASCADE)
     scale = models.CharField(max_length=20, blank=True, null=True)
     placeholder = models.CharField(max_length=200, blank=True, null=True)
 
