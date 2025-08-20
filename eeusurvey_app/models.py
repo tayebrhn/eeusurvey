@@ -1,4 +1,6 @@
 # models.py
+from datetime import datetime, timezone
+
 from django.db import models
 
 class Survey(models.Model):
@@ -54,3 +56,11 @@ class QuestionOption(models.Model):
 
     def __str__(self): # type: ignore
         return self.label or self.text or self.value
+
+class PhoneOTP(models.Model):
+    phone = models.CharField(max_length=15, unique=True)
+    otp = models.CharField(max_length=6, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def is_expired(self):
+        return timezone.now() > self.created_at + datetime.timedelta(minutes=5)

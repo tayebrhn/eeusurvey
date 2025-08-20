@@ -30,24 +30,22 @@ class QuestionSerializer(serializers.ModelSerializer):
         if instance.question_type == 'multi_select':
             # For multi_select, options should be a list of objects with value and label
             data['options'] = [
-                {'value': opt.value, 'label': opt.label} 
+                {
+                    'id': opt.option_id,
+                    'text': opt.text,
+                    **({'is_other': True} if opt.is_other else {})
+                }
                 for opt in instance.options.all() if opt.value and opt.label
             ]
         elif instance.question_type == 'single_choice':
-            if instance.options.exists():
-                # Check if options have value/label structure or id/text structure
-                first_option = instance.options.first()
-                if first_option.value and first_option.label:
-                    data['options'] = [opt.label for opt in instance.options.all()]
-                else:
-                    data['options'] = [
-                        {
-                            'id': opt.option_id,
-                            'text': opt.text,
-                            **({'is_other': True} if opt.is_other else {})
-                        }
-                        for opt in instance.options.all()
-                    ]
+            data['options'] = [
+                {
+                    'id': opt.option_id,
+                    'text': opt.text,
+                    **({'is_other': True} if opt.is_other else {})
+                }
+                for opt in instance.options.all() if opt.value and opt.label
+            ]
         
         # Remove None values to match original JSON structure
         return {k: v for k, v in data.items() if v is not None}
@@ -72,6 +70,7 @@ class SurveySerializer(serializers.ModelSerializer):
     def get_metadata(self, obj):
         return {
             'created': obj.created.strftime('%Y-%m-%d'),
+            'version': obj.version,
             'language': obj.language
         }
 
@@ -79,6 +78,4 @@ class SurveySerializer(serializers.ModelSerializer):
         return {
             'title': obj.title,
             'instructions': obj.instructions,
-            'version': obj.version,
-            'metadata': self.get_metadata(obj)
         }
