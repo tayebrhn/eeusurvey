@@ -1,6 +1,7 @@
 # views.py
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
+from rest_framework.permissions import IsAdminUser, AllowAny
 from rest_framework.response import Response
 from datetime import datetime
 from .serializers import SurveySerializer
@@ -9,6 +10,10 @@ from .models import Survey, Question, QuestionOption, QuestionCategory
 class SurveyViewSet(viewsets.ModelViewSet):
     queryset = Survey.objects.all()
     serializer_class = SurveySerializer
+    def get_permissions(self):
+        if self.action == 'create':
+            return [IsAdminUser()]  # 👈 Only admins
+        return [AllowAny()]
 
     def create(self, request):
         """Create a new survey from JSON data"""
