@@ -4,58 +4,33 @@ from .models import Survey, Question, QuestionOption, QuestionCategory
 
 class QuestionOptionSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(source='option_id', required=False, allow_null=True)
-    
+
     class Meta:
         model = QuestionOption
         fields = ['id', 'value', 'label', 'text', 'is_other']
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
-        # Remove None values to match original JSON structure
         return {k: v for k, v in data.items() if v is not None}
+
 
 class QuestionSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(source='question_id')
     question = serializers.CharField(source='question_text')
     type = serializers.CharField(source='question_type')
+    category = serializers.IntegerField(source='category.id')
     options = QuestionOptionSerializer(many=True, read_only=True)
 
     class Meta:
         model = Question
         fields = ['id', 'type', 'question', 'category', 'options', 'scale', 'placeholder']
 
-    def to_representation(self, instance):
-        data = super().to_representation(instance)
-        # Handle different option formats based on question type
-        if instance.question_type == 'multi_select':
-            # For multi_select, options should be a list of objects with value and label
-            data['options'] = [
-                {
-                    'id': opt.option_id,
-                    'text': opt.text,
-                    **({'is_other': True} if opt.is_other else {})
-                }
-                for opt in instance.options.all() if opt.value and opt.label
-            ]
-        elif instance.question_type == 'single_choice':
-            data['options'] = [
-                {
-                    'id': opt.option_id,
-                    'text': opt.text,
-                    **({'is_other': True} if opt.is_other else {})
-                }
-                for opt in instance.options.all() if opt.value and opt.label
-            ]
-        
-        # Remove None values to match original JSON structure
-        return {k: v for k, v in data.items() if v is not None}
 
 class QuestionCategorySerializer(serializers.ModelSerializer):
-    id = serializers.IntegerField()
-    
     class Meta:
         model = QuestionCategory
         fields = ['id', 'name']
+
 
 class SurveySerializer(serializers.ModelSerializer):
     questions = QuestionSerializer(many=True, read_only=True)
@@ -65,13 +40,13 @@ class SurveySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Survey
-        fields = ['survey', 'questions', 'question_categories','metadata']
+        fields = ['survey', 'questions', 'question_categories', 'metadata']
 
     def get_metadata(self, obj):
         return {
             'created': obj.created.strftime('%Y-%m-%d'),
             'version': obj.version,
-            'language': obj.language
+            'language': obj.language,
         }
 
     def get_survey(self, obj):
