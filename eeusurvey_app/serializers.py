@@ -38,7 +38,7 @@ class SurveySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Survey
-        fields = ['metadata', 'questions', 'question_categories']
+        fields = ['metadata', 'questions', 'question_categories',"is_active"]
 
     def get_metadata(self, obj):
         return {

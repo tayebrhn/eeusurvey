@@ -5,6 +5,7 @@ from rest_framework.permissions import IsAdminUser, AllowAny
 from rest_framework.response import Response
 from datetime import datetime, timedelta
 from django.utils import timezone
+from django.db.models import QuerySet
 from .serializers import SurveySerializer
 from .models import Survey, Question, QuestionOption, QuestionCategory
 
@@ -76,10 +77,13 @@ class SurveyViewSet(viewsets.ModelViewSet):
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-    @action(detail=True, methods=['get'])
-    def export_json(self, request, pk=None):
-        """Export survey in original JSON-like format"""
-        survey = self.get_object()
-        print('EXPORT_METHOD',survey)
-        serializer = self.get_serializer(survey)
-        return Response(serializer.data)
+    # @action(detail=True, methods=['get'])
+    # def export_json(self, request, pk=None):
+    #     """Export survey in original JSON-like format"""
+    #     survey = self.get_object()
+    #     print('EXPORT_METHOD',survey)
+    #     serializer = self.get_serializer(survey)
+    #     return Response(serializer.data)
+
+    def get_queryset(self)-> QuerySet[Survey]: # type: ignore
+        return Survey.objects.filter(is_active=True)
