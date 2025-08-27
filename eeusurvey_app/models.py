@@ -1,17 +1,42 @@
 # models.py
+import uuid
+from django.utils import timezone
 from django.db import models
 
 class Survey(models.Model):
+    LANGUAGES = [
+        ("en","English"),
+        ("am","Amharic"),
+        ("om","Afan Oromo")
+    ]
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False
+    )
     title = models.CharField(max_length=500)
     instructions = models.TextField()
     version = models.CharField(max_length=20)
-    created = models.DateField()
-    language = models.CharField(max_length=50)
+    is_active = models.BooleanField(default=True)
+    start_time = models.DateField()
+    end_time = models.DateField()
+    language = models.CharField(max_length=50,choices=LANGUAGES)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    def save(self,*args,**kwargs):
+        if self.end_time <= timezone.now().date():
+            self.is_active = False
+        else:
+            self.is_active = True
+        super().save(*args,**kwargs)
+
+    @property
+    def has_expired(self):
+        return timezone.now() >= self.end_time
+    
     def __str__(self):
-        return self.title
+        return f"{self.title} ({'active' if self.is_active else 'inactive'})"
 
 
 class QuestionCategory(models.Model):
@@ -26,33 +51,40 @@ class Question(models.Model):
     QUESTION_TYPES = [
         ('single_choice', 'Single Choice'),
         ('multi_select', 'Multi Select'),
+        ('drop_down', 'Drop Down'),
+        ('text_area', 'Text Area'),
         ('rating', 'Rating'),
         ('number', 'Number'),
         ('text', 'Text'),
     ]
 
+    id = models.BigAutoField(primary_key=True,editable=False)
     survey = models.ForeignKey(Survey, related_name='questions', on_delete=models.CASCADE)
-    question_id = models.IntegerField()
-    question_type = models.CharField(max_length=20, choices=QUESTION_TYPES)
     question_text = models.TextField()
+    question_type = models.CharField(max_length=20, choices=QUESTION_TYPES)
     category = models.ForeignKey(QuestionCategory, related_name="questions", on_delete=models.CASCADE)
-    scale = models.CharField(max_length=20, blank=True, null=True)
     placeholder = models.CharField(max_length=200, blank=True, null=True)
+    scale = models.CharField(max_length=20, blank=True, null=True)
+    question_label = models.TextField(editable=False)
+    
+    def save(self,*args,**kwargs):
+        self.question_label = f"Q_{self.id}"
+        super().save(*args,**kwargs)
 
     class Meta:
-        unique_together = ('survey', 'question_id')
+        unique_together = ('survey', 'id')
 
     def __str__(self):
-        return f"Q{self.question_id}: {self.question_text[:50]}"
+        return f"Q{self.question_text[:50]}"
 
 
 class QuestionOption(models.Model):
     question = models.ForeignKey(Question, related_name='options', on_delete=models.CASCADE)
-    option_id = models.IntegerField(blank=True, null=True)
+    id = models.BigAutoField(primary_key=True,editable=False)
     value = models.CharField(max_length=100, blank=True, null=True)
     label = models.CharField(max_length=200, blank=True, null=True)
     text = models.CharField(max_length=200, blank=True, null=True)
     is_other = models.BooleanField(default=False)
 
     def __str__(self):
-        return self.label or self.text or self.value or f"Option {self.option_id}"
+        return self.label or self.text or self.value or f"Option {self.id}"

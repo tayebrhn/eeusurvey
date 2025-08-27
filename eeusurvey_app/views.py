@@ -3,7 +3,8 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAdminUser, AllowAny
 from rest_framework.response import Response
-from datetime import datetime
+from datetime import datetime, timedelta
+from django.utils import timezone
 from .serializers import SurveySerializer
 from .models import Survey, Question, QuestionOption, QuestionCategory
 
@@ -19,17 +20,18 @@ class SurveyViewSet(viewsets.ModelViewSet):
         """Create a new survey from JSON data"""
         try:
             data = request.data
-            survey_data = data.get('survey', {})
+            survey_data = data.get('metadata', {})
+
+            start_str = survey_data.get('start', datetime.today().strftime('%Y-%m-%d'))
+            end_str = survey_data.get('end', datetime.today().strftime('%Y-%m-%d'))
 
             survey = Survey.objects.create(
                 title=survey_data.get('title', ''),
                 instructions=survey_data.get('instructions', ''),
                 version=survey_data.get('version', '1.0'),
-                created=datetime.strptime(
-                    survey_data.get('metadata', {}).get('created', datetime.today().strftime('%Y-%m-%d')),
-                    '%Y-%m-%d'
-                ).date(),
-                language=survey_data.get('metadata', {}).get('language', '')
+                start_time = timezone.make_aware(datetime.strptime(start_str, '%Y-%m-%d')),
+                end_time = timezone.make_aware(datetime.strptime(end_str, '%Y-%m-%d') + timedelta(days=1, seconds=-1)),
+                language=survey_data.get('language', '')
             )
 
             # Create categories
@@ -48,9 +50,9 @@ class SurveyViewSet(viewsets.ModelViewSet):
 
                 question = Question.objects.create(
                     survey=survey,
-                    question_id=q_data.get('id'),
                     question_type=q_data.get('type'),
                     question_text=q_data.get('question'),
+                    question_label=q_data.get('label'),
                     category=category,
                     scale=q_data.get('scale'),
                     placeholder=q_data.get('placeholder')
@@ -60,7 +62,6 @@ class SurveyViewSet(viewsets.ModelViewSet):
                     if isinstance(option, dict):
                         QuestionOption.objects.create(
                             question=question,
-                            option_id=option.get('id'),
                             value=option.get('value'),
                             label=option.get('label'),
                             text=option.get('text'),
@@ -79,5 +80,6 @@ class SurveyViewSet(viewsets.ModelViewSet):
     def export_json(self, request, pk=None):
         """Export survey in original JSON-like format"""
         survey = self.get_object()
+        print('EXPORT_METHOD',survey)
         serializer = self.get_serializer(survey)
         return Response(serializer.data)
