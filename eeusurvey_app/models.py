@@ -27,8 +27,7 @@ class Survey(models.Model):
     def save(self,*args,**kwargs):
         if self.end_time <= timezone.now().date():
             self.is_active = False
-        else:
-            self.is_active = True
+
         super().save(*args,**kwargs)
 
     @property

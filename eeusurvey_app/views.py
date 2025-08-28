@@ -85,5 +85,12 @@ class SurveyViewSet(viewsets.ModelViewSet):
     #     serializer = self.get_serializer(survey)
     #     return Response(serializer.data)
 
-    def get_queryset(self)-> QuerySet[Survey]: # type: ignore
-        return Survey.objects.filter(is_active=True)
+# distinction b/n django and drf views
+    def list(self,request, *args,**kwargs):
+        show_all = request.query_params.get('show_all')
+        if show_all == 'true':
+            queryset = Survey.objects.all()
+        else:
+            queryset = Survey.objects.filter(is_active=True)
+        serializer = self.get_serializer(queryset,many=True)        
+        return Response(serializer.data)
