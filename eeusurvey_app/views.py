@@ -30,8 +30,8 @@ class SurveyViewSet(viewsets.ModelViewSet):
                 title=survey_data.get('title', ''),
                 instructions=survey_data.get('instructions', ''),
                 version=survey_data.get('version', '1.0'),
-                start_time = timezone.make_aware(datetime.strptime(start_str, '%Y-%m-%d')),
-                end_time = timezone.make_aware(datetime.strptime(end_str, '%Y-%m-%d') + timedelta(days=1, seconds=-1)),
+                start_time = timezone.make_aware(datetime.strptime(start_str, '%Y-%m-%d')).date(),
+                end_time = timezone.make_aware(datetime.strptime(end_str, '%Y-%m-%d') + timedelta(days=1, seconds=-1)).date(),
                 language=survey_data.get('language', '')
             )
 
@@ -53,7 +53,7 @@ class SurveyViewSet(viewsets.ModelViewSet):
                     survey=survey,
                     question_type=q_data.get('type'),
                     question_text=q_data.get('question'),
-                    question_label=q_data.get('label'),
+                    # question_label=q_data.get('label'),
                     category=category,
                     scale=q_data.get('scale'),
                     placeholder=q_data.get('placeholder')

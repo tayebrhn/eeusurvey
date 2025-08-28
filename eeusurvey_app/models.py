@@ -27,12 +27,11 @@ class Survey(models.Model):
     def save(self,*args,**kwargs):
         if self.end_time <= timezone.now().date():
             self.is_active = False
-
         super().save(*args,**kwargs)
 
-    @property
-    def has_expired(self):
-        return timezone.now() >= self.end_time
+    # @property
+    # def has_expired(self):
+    #     return timezone.now().date() >= self.end_time
     
     def __str__(self):
         return f"{self.title} ({'active' if self.is_active else 'inactive'})"
@@ -67,8 +66,12 @@ class Question(models.Model):
     question_label = models.TextField(editable=False)
     
     def save(self,*args,**kwargs):
-        self.question_label = f"Q_{self.id}"
         super().save(*args,**kwargs)
+        if not self.question_label:
+            self.question_label = f"Q_{self.id}"
+
+            #save agian to update the label
+            super().save(update_fields=['question_label'])
 
     class Meta:
         unique_together = ('survey', 'id')
