@@ -1,4 +1,5 @@
 # views.py
+from django.shortcuts import get_object_or_404
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAdminUser, AllowAny
@@ -93,4 +94,36 @@ class SurveyViewSet(viewsets.ModelViewSet):
         else:
             queryset = Survey.objects.filter(is_active=True)
         serializer = self.get_serializer(queryset,many=True)        
+        return Response(serializer.data)
+
+    # @action(detail=False, methods=['get'], url_path=r'lang/(?P<language>[^/]+)')
+    # def list_by_language(self, request, language=None):
+    #     """Return all active surveys in a given language"""
+    #     queryset = Survey.objects.filter(language=language, is_active=True)
+    #     serializer = self.get_serializer(queryset, many=True)
+    #     return Response(serializer.data)
+    
+    @action(detail=False, methods=['get'], url_path=r'lang/(?P<language>[^/]+)')
+    def list_by_language(self, request, language=None):
+        """Return surveys filtered by language (and active unless show_all=true)"""
+        show_all = request.query_params.get('show_all')
+        if show_all == 'true':
+            queryset = Survey.objects.filter(language__iexact=language)
+        else:
+            queryset = Survey.objects.filter(language__iexact=language, is_active=True)
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+    
+    # @action(detail=True, methods=['get'], url_path=r'lang/(?P<language>[^/]+)')
+    # def retrieve_by_language(self, request, pk=None, language=None):
+    #     """Return a single survey by ID + language"""
+    #     survey = get_object_or_404(Survey, pk=pk, language=language,is_active=True)
+    #     serializer = self.get_serializer(survey)
+    #     return Response(serializer.data)
+
+    @action(detail=True, methods=['get'], url_path=r'lang/(?P<language>[^/]+)')
+    def retrieve_by_language(self, request, pk=None, language=None):
+        """Return one survey by id + language"""
+        survey = get_object_or_404(Survey, pk=pk, language__iexact=language,is_active=True)
+        serializer = self.get_serializer(survey)
         return Response(serializer.data)
