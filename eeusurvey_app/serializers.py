@@ -35,12 +35,15 @@ class SurveySerializer(serializers.ModelSerializer):
     question_categories = QuestionCategorySerializer(many=True, source='categories', read_only=True)
     metadata = serializers.SerializerMethodField()
     id = serializers.SerializerMethodField()
+    # is_active = serializers.SerializerMethodField()
     # survey = serializers.SerializerMethodField()
 
     class Meta:
         model = Survey
-        fields = ['id','metadata', 'questions', 'question_categories',"is_active"]
+        fields = ['id','metadata', 'questions', 'question_categories']
     
+    # def get_id(self,obj):
+    #     return obj.id
     def get_id(self,obj):
         return obj.id
 

@@ -13,6 +13,7 @@ from .models import Survey, Question, QuestionOption, QuestionCategory
 class SurveyViewSet(viewsets.ModelViewSet):
     queryset = Survey.objects.all()
     serializer_class = SurveySerializer
+    
     def get_permissions(self):
         if self.action == 'create':
             return [IsAdminUser()]  # 👈 Only admins
@@ -87,14 +88,21 @@ class SurveyViewSet(viewsets.ModelViewSet):
     #     return Response(serializer.data)
 
 # distinction b/n django and drf views
-    def list(self,request, *args,**kwargs):
-        show_all = request.query_params.get('show_all')
-        if show_all == 'true':
-            queryset = Survey.objects.all()
-        else:
-            queryset = Survey.objects.filter(is_active=True)
-        serializer = self.get_serializer(queryset,many=True)        
-        return Response(serializer.data)
+    # def list(self,request, *args,**kwargs):
+    #     lang = request.query_params.get('lang')
+    #     show_all = request.query_params.get('show_all')
+    #     queryset = Survey.objects.all()
+    #     if show_all == 'false':
+    #         queryset = Survey.objects.filter(is_active=True)
+    #     else:
+    #         queryset = queryset.all()
+    #     if lang:
+    #         queryset = queryset.filter(language__iexact=lang)
+    #     else:
+    #         queryset = queryset.all()
+
+    #     serializer = self.get_serializer(queryset,many=True)        
+    #     return Response(serializer.data)
 
     # @action(detail=False, methods=['get'], url_path=r'lang/(?P<language>[^/]+)')
     # def list_by_language(self, request, language=None):
@@ -103,16 +111,16 @@ class SurveyViewSet(viewsets.ModelViewSet):
     #     serializer = self.get_serializer(queryset, many=True)
     #     return Response(serializer.data)
     
-    @action(detail=False, methods=['get'], url_path=r'lang/(?P<language>[^/]+)')
-    def list_by_language(self, request, language=None):
-        """Return surveys filtered by language (and active unless show_all=true)"""
-        show_all = request.query_params.get('show_all')
-        if show_all == 'true':
-            queryset = Survey.objects.filter(language__iexact=language)
-        else:
-            queryset = Survey.objects.filter(language__iexact=language, is_active=True)
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data)
+    # @action(detail=False, methods=['get'], url_path=r'/(?P<language>[^/]+)')
+    # def list_by_language(self, request, language=None):
+    #     """Return surveys filtered by language (and active unless show_all=true)"""
+    #     show_all = request.query_params.get('show_all')
+    #     if show_all == 'true':
+    #         queryset = Survey.objects.filter(language__iexact=language)
+    #     else:
+    #         queryset = Survey.objects.filter(language__iexact=language, is_active=True)
+    #     serializer = self.get_serializer(queryset, many=True)
+    #     return Response(serializer.data)
     
     # @action(detail=True, methods=['get'], url_path=r'lang/(?P<language>[^/]+)')
     # def retrieve_by_language(self, request, pk=None, language=None):
@@ -121,9 +129,36 @@ class SurveyViewSet(viewsets.ModelViewSet):
     #     serializer = self.get_serializer(survey)
     #     return Response(serializer.data)
 
-    @action(detail=True, methods=['get'], url_path=r'lang/(?P<language>[^/]+)')
-    def retrieve_by_language(self, request, pk=None, language=None):
-        """Return one survey by id + language"""
-        survey = get_object_or_404(Survey, pk=pk, language__iexact=language,is_active=True)
-        serializer = self.get_serializer(survey)
+    # @action(detail=True, methods=['get'], url_path=r'/')
+    # def retrieve_by_language(self, request, pk=None, language=None):
+    #     """Return one survey by id + language"""
+    #     survey = get_object_or_404(Survey, pk=pk, language__iexact=language,is_active=True)
+    #     serializer = self.get_serializer(survey)
+    #     return Response(serializer.data)
+
+    def list(self, request, *args, **kwargs):
+        lang = request.query_params.get("lang")
+        show_all = request.query_params.get("show_all")
+
+        queryset = Survey.objects.all()
+
+        if show_all != "true":
+            queryset = queryset.filter(is_active=True)
+
+        if lang:
+            queryset = queryset.filter(language=lang)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()  # single Survey by ID
+        lang = request.query_params.get("lang")
+
+        if lang and instance.language != lang:
+            return Response(
+                {"detail": "Survey not available in this language."}, status=404
+            )
+
+        serializer = self.get_serializer(instance)
         return Response(serializer.data)
