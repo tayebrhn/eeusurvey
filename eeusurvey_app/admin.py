@@ -22,7 +22,7 @@ class SurveyAdmin(admin.ModelAdmin):
 @admin.register(Question)
 class QuestionAdmin(admin.ModelAdmin):
     list_display = ['question_text', 'question_type', 'category']
-    list_filter = ['question_type', 'category']
+    list_filter = ['survey','question_type', 'category']
     
 
 @admin.register(QuestionOption)
