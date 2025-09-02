@@ -2,7 +2,7 @@
 from django import forms
 from django.contrib import admin
 from django.contrib.admin.widgets import AdminSplitDateTime
-from .models import Survey, Question, QuestionOption, QuestionCategory
+from .models import KeyChoice, Survey, Question, QuestionOption, QuestionCategory
 
 # class SurveyAdminForm(forms.ModelForm):
 #     class Meta:
@@ -31,3 +31,7 @@ class QuestionOptionAdmin(admin.ModelAdmin):
 @admin.register(QuestionCategory)
 class QuestionCategoryAdmin(admin.ModelAdmin):
     list_display = ['name', 'survey']
+
+@admin.register(KeyChoice)
+class KeyChoiceAdmin(admin.ModelAdmin):
+    list_display = ['key', 'description','survey']

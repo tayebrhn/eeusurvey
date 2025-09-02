@@ -151,14 +151,14 @@ class SurveyViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
-    def retrieve(self, request, *args, **kwargs):
-        instance = self.get_object()  # single Survey by ID
-        # lang = request.query_params.get("lang")
+    # def retrieve(self, request, *args, **kwargs):
+    #     instance = self.get_object()  # single Survey by ID
+    #     # lang = request.query_params.get("lang")
 
-        # if lang and instance.language != lang:
-        #     return Response(
-        #         {"detail": "Survey not available in this language."}, status=404
-        #     )
+    #     # if lang and instance.language != lang:
+    #     #     return Response(
+    #     #         {"detail": "Survey not available in this language."}, status=404
+    #     #     )
 
-        serializer = self.get_serializer(instance)
-        return Response(serializer.data)
+    #     serializer = self.get_serializer(instance)
+    #     return Response(serializer.data)

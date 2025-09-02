@@ -1,6 +1,6 @@
 # serializers.py
 from rest_framework import serializers
-from .models import Survey, Question, QuestionOption, QuestionCategory
+from .models import KeyChoice, Survey, Question, QuestionOption, QuestionCategory
 
 class QuestionOptionSerializer(serializers.ModelSerializer):
     class Meta:
@@ -24,6 +24,11 @@ class QuestionSerializer(serializers.ModelSerializer):
         fields = ['id', 'type', 'question','label', 'category', 'options', 'scale', 'placeholder']
 
 
+class KeyChoiceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = KeyChoice
+        fields = ['key','description']
+
 class QuestionCategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = QuestionCategory
@@ -33,6 +38,7 @@ class QuestionCategorySerializer(serializers.ModelSerializer):
 class SurveySerializer(serializers.ModelSerializer):
     questions = QuestionSerializer(many=True, read_only=True)
     question_categories = QuestionCategorySerializer(many=True, source='categories', read_only=True)
+    key_choice = KeyChoiceSerializer(many=True,source='keys', read_only=True)
     metadata = serializers.SerializerMethodField()
     id = serializers.SerializerMethodField()
     # is_active = serializers.SerializerMethodField()
@@ -40,7 +46,7 @@ class SurveySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Survey
-        fields = ['id','metadata', 'questions', 'question_categories']
+        fields = ['id','metadata', 'questions','key_choice' ,'question_categories']
     
     # def get_id(self,obj):
     #     return obj.id

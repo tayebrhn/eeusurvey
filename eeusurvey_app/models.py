@@ -2,13 +2,20 @@
 import uuid
 from django.utils import timezone
 from django.db import models
-
+    
 class Survey(models.Model):
     LANGUAGES = [
         ("en","English"),
         ("am","Amharic"),
         ("om","Afan Oromo")
     ]
+    # DEFAULT_KEYS = [
+    #     ('1','እጅግ በጣም ጥሩ'),
+    #     ('2', 'በጣም ጥሩ'),
+    #     ('3', 'ጥሩ'),
+    #     ('4', 'አጥጋቢ አይደለም'),
+    #     ('5', 'በጣም አጥጋቢ አይደለም')
+    # ]
     id = models.UUIDField(
         primary_key=True,
         default=uuid.uuid4,
@@ -43,6 +50,20 @@ class QuestionCategory(models.Model):
 
     def __str__(self):
         return self.name
+    
+
+class KeyChoice(models.Model):
+    key = models.CharField(max_length=10)   # Editable key (e.g. "1", "2", ...)
+    description = models.CharField(max_length=100)       # Editable label (e.g. "እጅግ በጣም ጥሩ")
+    survey = models.ForeignKey(Survey, related_name='keys', on_delete=models.CASCADE)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["survey","key"],name="unique_key_per_survey")
+        ]
+
+    def __str__(self):
+        return f"{self.survey.title} | {self.key} - {self.description}"
 
 
 class Question(models.Model):
