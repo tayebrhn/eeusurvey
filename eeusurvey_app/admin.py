@@ -23,10 +23,11 @@ class SurveyAdmin(admin.ModelAdmin):
 class QuestionAdmin(admin.ModelAdmin):
     list_display = ['question_text', 'question_type', 'category']
     list_filter = ['question_type', 'category']
+    
 
 @admin.register(QuestionOption)
 class QuestionOptionAdmin(admin.ModelAdmin):
-    list_display = ['question', 'label', 'text', 'is_other']
+    list_display = ['survey','label', 'text', 'is_other']
 
 @admin.register(QuestionCategory)
 class QuestionCategoryAdmin(admin.ModelAdmin):

@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 from django.utils import timezone
 from django.db.models import QuerySet
 from .serializers import SurveySerializer
-from .models import Survey, Question, QuestionOption, QuestionCategory
+from .models import KeyChoice, Survey, Question, QuestionOption, QuestionCategory
 
 class SurveyViewSet(viewsets.ModelViewSet):
     queryset = Survey.objects.all()
@@ -37,6 +37,15 @@ class SurveyViewSet(viewsets.ModelViewSet):
                 language=survey_data.get('language', '')
             )
 
+            # Create KeyChoice
+            # choice_map = {}
+            for choice_data in data.get('key_choice', []):
+                KeyChoice.objects.create(
+                    survey=survey,
+                    key=choice_data.get('key'),
+                    description=choice_data.get('description')
+                )
+                # choice_map[cat_data.get('id')] = key_choice
             # Create categories
             categories_map = {}
             for cat_data in data.get('question_categories', []):
@@ -55,24 +64,26 @@ class SurveyViewSet(viewsets.ModelViewSet):
                     survey=survey,
                     question_type=q_data.get('type'),
                     question_text=q_data.get('question'),
-                    # question_label=q_data.get('label'),
                     category=category,
                     scale=q_data.get('scale'),
                     placeholder=q_data.get('placeholder')
                 )
 
+                option_instances = []
                 for option in q_data.get('options', []):
                     if isinstance(option, dict):
-                        QuestionOption.objects.create(
-                            question=question,
+                        option_instance=QuestionOption.objects.create(
+                            survey=survey,
                             value=option.get('value'),
                             label=option.get('label'),
                             text=option.get('text'),
                             is_other=option.get('is_other', False),
                         )
+                        option_instances.append(option_instance)
                     elif isinstance(option, str):
-                        QuestionOption.objects.create(question=question, label=option)
-
+                        option_instance=QuestionOption.objects.create(survey=survey, label=option)
+                        option_instances.append(option_instance)
+                question.options.add(*option_instances)
             serializer = self.get_serializer(survey)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 

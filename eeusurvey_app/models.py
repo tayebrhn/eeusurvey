@@ -66,6 +66,17 @@ class KeyChoice(models.Model):
         return f"{self.survey.title} | {self.key} - {self.description}"
 
 
+class QuestionOption(models.Model):
+    survey = models.ForeignKey(Survey, related_name='survey', on_delete=models.CASCADE)
+    id = models.BigAutoField(primary_key=True,editable=False)
+    value = models.CharField(max_length=100, blank=True, null=True)
+    label = models.CharField(max_length=200, blank=True, null=True)
+    text = models.CharField(max_length=200, blank=True, null=True)
+    is_other = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.label or self.text or self.value or f"Option {self.id}"
+
 class Question(models.Model):
     QUESTION_TYPES = [
         ('single_choice', 'Single Choice'),
@@ -84,6 +95,11 @@ class Question(models.Model):
     category = models.ForeignKey(QuestionCategory, related_name="questions", on_delete=models.CASCADE)
     placeholder = models.CharField(max_length=200, blank=True, null=True)
     scale = models.CharField(max_length=20, blank=True, null=True)
+    options = models.ManyToManyField(
+        QuestionOption,
+        related_name='questions',
+        blank=True
+    )
     question_label = models.TextField(editable=False)
     
     def save(self,*args,**kwargs):
@@ -100,14 +116,3 @@ class Question(models.Model):
     def __str__(self):
         return f"Q{self.question_text[:50]}"
 
-
-class QuestionOption(models.Model):
-    question = models.ForeignKey(Question, related_name='options', on_delete=models.CASCADE)
-    id = models.BigAutoField(primary_key=True,editable=False)
-    value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=200, blank=True, null=True)
-    text = models.CharField(max_length=200, blank=True, null=True)
-    is_other = models.BooleanField(default=False)
-
-    def __str__(self):
-        return self.label or self.text or self.value or f"Option {self.id}"
