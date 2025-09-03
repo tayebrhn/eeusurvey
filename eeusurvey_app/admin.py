@@ -31,7 +31,9 @@ class QuestionOptionAdmin(admin.ModelAdmin):
 
 @admin.register(QuestionCategory)
 class QuestionCategoryAdmin(admin.ModelAdmin):
-    list_display = ['name', 'survey']
+    list_display = ['name', 'cat_number','survey']
+    list_filter = ['survey']
+
 
 @admin.register(KeyChoice)
 class KeyChoiceAdmin(admin.ModelAdmin):

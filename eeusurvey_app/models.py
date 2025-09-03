@@ -1,7 +1,8 @@
 # models.py
 import uuid
+from django.core.exceptions import ValidationError
+from django.db import models, transaction
 from django.utils import timezone
-from django.db import models
     
 class Survey(models.Model):
     LANGUAGES = [
@@ -45,11 +46,62 @@ class Survey(models.Model):
 
 
 class QuestionCategory(models.Model):
+    cat_number = models.PositiveIntegerField(null=True, blank=True, help_text="Leave empty to auto-generate")
     name = models.CharField(max_length=100)
     survey = models.ForeignKey(Survey, related_name='categories', on_delete=models.CASCADE)
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["survey","cat_number","name"],name="unique_cat_number_per_survey")
+        ]
+        ordering = ["survey", "cat_number"]
+    def clean(self):
+        """Extra validation: cat_number must stay in range"""
+        if self.cat_number is not None:
+            # Count current categories (exclude self if updating)
+            count = QuestionCategory.objects.filter(
+                survey=self.survey
+            ).exclude(pk=self.pk).count()
+
+            # Allowed range is 1..(count+1)
+            if not (1 <= self.cat_number <= count + 1):
+                raise ValidationError({
+                    "cat_number": f"Number must be between 1 and {count + 1}"
+                })
+    def save(self, *args, **kwargs):
+        self.full_clean()  # ensure validation runs
+        with transaction.atomic():
+            if self.cat_number is None:
+                # Auto-generate: next available number
+                last_number = (
+                    QuestionCategory.objects
+                    .filter(survey=self.survey)
+                    .aggregate(models.Max("cat_number"))
+                    .get("cat_number__max")
+                )
+                self.cat_number = 1 if last_number is None else last_number + 1
+            else:
+                # If conflict → shift others down
+                QuestionCategory.objects.filter(
+                    survey=self.survey,
+                    cat_number__gte=self.cat_number
+                ).exclude(pk=self.pk).update(cat_number=models.F("cat_number") + 1)
+
+            super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        with transaction.atomic():
+            deleted_number = self.cat_number
+            result = super().delete(*args, **kwargs)
+
+            # Shift all numbers above it up by 1
+            QuestionCategory.objects.filter(
+                survey=self.survey,
+                cat_number__gt=deleted_number
+            ).update(cat_number=models.F("cat_number") - 1)
+            return result
 
     def __str__(self):
-        return self.name
+        return f"{self.cat_number}. {self.name} ({self.survey.title})"
     
 
 class KeyChoice(models.Model):

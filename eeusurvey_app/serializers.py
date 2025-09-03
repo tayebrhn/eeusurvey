@@ -32,7 +32,7 @@ class KeyChoiceSerializer(serializers.ModelSerializer):
 class QuestionCategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = QuestionCategory
-        fields = ['id', 'name']
+        fields = ['id','cat_number', 'name']
 
 
 class SurveySerializer(serializers.ModelSerializer):
