@@ -1,0 +1,376 @@
+<!-- templates/admin/survey_analysis.html -->
+{% extends "admin/base_site.html" %} {% load admin_urls static admin_list %} {%
+block title %}Analysis for {{ survey.title }}{% endblock %} {% block breadcrumbs
+%}
+<div class="breadcrumbs">
+  <a href="{% url 'admin:index' %}">Home</a>
+  <a href="{% url 'admin:eeusurvey_app_survey_changelist' %}">Surveys</a>
+  <a href="{% url 'admin:eeusurvey_app_survey_change' survey.id %}"
+    >{{ survey.title }}</a
+  >
+  Analysis
+</div>
+{% endblock %} {% block content %}
+<div class="analysis-container">
+  <h1>📊 Survey Analysis: {{ survey.title }}</h1>
+
+  {% if not has_responses %}
+  <div class="messagelist">
+    <div class="info">
+      No responses have been submitted for this survey yet.
+    </div>
+  </div>
+  {% else %}
+  <!-- Summary Statistics -->
+  <div class="module">
+    <h2>📈 Overview</h2>
+    <div class="results">
+      <table class="result-list">
+        <thead>
+          <tr>
+            <th>Metric</th>
+            <th>Value</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Total Responses</strong></td>
+            <td>{{ total_responses }}</td>
+          </tr>
+          <tr>
+            <td><strong>Survey Period</strong></td>
+            <td>{{ survey.start_time }} to {{ survey.end_time }}</td>
+          </tr>
+          <tr>
+            <td><strong>Language</strong></td>
+            <td>{{ survey.get_language_display }}</td>
+          </tr>
+          <tr>
+            <td><strong>Total Questions</strong></td>
+            <td>{{ survey.questions.count }}</td>
+          </tr>
+          <tr>
+            <td><strong>Total Categories</strong></td>
+            <td>{{ survey.categories.count }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Response Timeline -->
+  {% if daily_responses %}
+  <div class="module">
+    <h2>📅 Response Timeline (Last 30 Days)</h2>
+    <div class="results">
+      <table class="result-list">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Responses</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for day in daily_responses %}
+          <tr>
+            <td>{{ day.date }}</td>
+            <td><strong>{{ day.count }}</strong></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Categories Summary -->
+  {% if category_summary %}
+  <div class="module">
+    <h2>📋 Categories Overview</h2>
+    <div class="results">
+      <table class="result-list">
+        <thead>
+          <tr>
+            <th>Category</th>
+            <th>Questions</th>
+            <th>Avg Responses</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for category_name, stats in category_summary.items %}
+          <tr>
+            <td><strong>{{ category_name }}</strong></td>
+            <td>{{ stats.total_questions }}</td>
+            <td>{{ stats.avg_responses|floatformat:1 }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Question Analysis -->
+  <div class="module">
+    <h2>📝 Question-by-Question Analysis</h2>
+
+    {% for question_data in questions_data %}
+    <div
+      class="module"
+      style="
+        margin-bottom: 30px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        overflow: hidden;
+      "
+    >
+      <div
+        style="
+          background: #f8f9fa;
+          padding: 15px;
+          border-bottom: 1px solid #ddd;
+        "
+      >
+        <h3 style="margin: 0; color: #007cba">
+          Q{{ forloop.counter }}: {{
+          question_data.question.question_text|truncatechars:100 }}
+        </h3>
+        <div style="margin-top: 8px; color: #6c757d; font-size: 0.9em">
+          <strong>Type:</strong> {{
+          question_data.question.get_question_type_display }} |
+          <strong>Category:</strong> {{ question_data.question.category.name }}
+          | <strong>Responses:</strong> {{ question_data.total_responses }} ({{
+          question_data.response_rate|floatformat:1 }}%)
+        </div>
+      </div>
+
+      <div style="padding: 20px">
+        {% if question_data.error %}
+        <p style="color: red">
+          <strong>Error:</strong> {{ question_data.error }}
+        </p>
+        {% else %}
+        <!-- Choice-based questions -->
+        {% if question_data.distribution %}
+        <h4>📊 Response Distribution</h4>
+        <div class="results">
+          <table class="result-list">
+            <thead>
+              <tr>
+                <th>Option</th>
+                <th>Count</th>
+                <th>Percentage</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for option, count in question_data.distribution.items %}
+              <tr>
+                <td>{{ option|truncatechars:50 }}</td>
+                <td><strong>{{ count }}</strong></td>
+                <td>
+                  {% widthratio count question_data.total_responses 100 %}%
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% endif %}
+
+        <!-- Rating questions -->
+        {% if question_data.rating_distribution %}
+        <h4>⭐ Rating Analysis</h4>
+        <p>
+          <strong>Average Rating:</strong> {{
+          question_data.average_rating|floatformat:2 }}/5.0
+        </p>
+        <div class="results">
+          <table class="result-list">
+            <thead>
+              <tr>
+                <th>Rating</th>
+                <th>Count</th>
+                <th>Percentage</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for rating, count in question_data.rating_distribution.items %}
+              <tr>
+                <td>{{ rating }} ⭐</td>
+                <td><strong>{{ count }}</strong></td>
+                <td>
+                  {% widthratio count question_data.total_responses 100 %}%
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% endif %}
+
+        <!-- Numeric questions -->
+        {% if question_data.average %}
+        <h4>🔢 Numeric Statistics</h4>
+        <ul>
+          <li>
+            <strong>Average:</strong> {{ question_data.average|floatformat:2 }}
+          </li>
+          <li><strong>Minimum:</strong> {{ question_data.min_value }}</li>
+          <li><strong>Maximum:</strong> {{ question_data.max_value }}</li>
+          <li>
+            <strong>Total Responses:</strong> {{ question_data.total_responses
+            }}
+          </li>
+        </ul>
+        {% endif %}
+
+        <!-- Text questions -->
+        {% if question_data.text_count %}
+        <h4>📝 Text Response Summary</h4>
+        <ul>
+          <li>
+            <strong>Total Text Responses:</strong> {{ question_data.text_count
+            }}
+          </li>
+          <li>
+            <strong>Average Length:</strong> {{
+            question_data.avg_length|floatformat:0 }} characters
+          </li>
+        </ul>
+
+        {% if question_data.sample_responses %}
+        <h5>Sample Responses:</h5>
+        <div
+          style="
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 10px 0;
+          "
+        >
+          {% for response in question_data.sample_responses %}
+          <div
+            style="
+              background: white;
+              border-left: 4px solid #007cba;
+              padding: 10px 15px;
+              margin: 8px 0;
+              border-radius: 4px;
+            "
+          >
+            <em>"{{ response|truncatechars:300 }}"</em>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %} {% endif %}
+
+        <!-- "Other" responses -->
+        {% if question_data.other_responses %}
+        <h4>💬 Custom "Other" Responses</h4>
+        <div style="background: #f8f9fa; padding: 15px; border-radius: 6px">
+          {% for other in question_data.other_responses %}
+          <div
+            style="
+              background: white;
+              border-left: 4px solid #28a745;
+              padding: 10px 15px;
+              margin: 8px 0;
+              border-radius: 4px;
+            "
+          >
+            <em>"{{ other }}"</em>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %} {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Export Options -->
+  <div class="module">
+    <h2>📥 Export & Actions</h2>
+    <div style="display: flex; gap: 15px; flex-wrap: wrap; margin: 20px 0">
+      <a
+        href="{% url 'admin:survey_export' survey.id %}"
+        class="button"
+        style="
+          background: #28a745;
+          color: white;
+          padding: 10px 20px;
+          text-decoration: none;
+          border-radius: 4px;
+        "
+      >
+        📄 Download CSV Export
+      </a>
+      <a
+        href="{% url 'admin:eeusurvey_app_survey_change' survey.id %}"
+        class="button"
+        style="
+          background: #007cba;
+          color: white;
+          padding: 10px 20px;
+          text-decoration: none;
+          border-radius: 4px;
+        "
+      >
+        ✏️ Edit Survey
+      </a>
+      <a
+        href="{% url 'admin:eeusurvey_app_surveyresponse_changelist' %}?survey__id__exact={{ survey.id }}"
+        class="button"
+        style="
+          background: #6c757d;
+          color: white;
+          padding: 10px 20px;
+          text-decoration: none;
+          border-radius: 4px;
+        "
+      >
+        👥 View Individual Responses
+      </a>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<style>
+  .analysis-container {
+    max-width: 1200px;
+  }
+
+  .module h2 {
+    border-bottom: 2px solid #007cba;
+    padding-bottom: 5px;
+    margin-bottom: 20px;
+    color: #333;
+  }
+
+  .module h3 {
+    margin-top: 0;
+  }
+
+  .module h4 {
+    color: #007cba;
+    margin-top: 25px;
+    margin-bottom: 15px;
+  }
+
+  .module h5 {
+    color: #6c757d;
+    margin-top: 20px;
+    margin-bottom: 10px;
+  }
+
+  .results table {
+    width: 100%;
+    margin: 10px 0;
+  }
+
+  .button:hover {
+    opacity: 0.8;
+  }
+</style>
+{% endblock %}

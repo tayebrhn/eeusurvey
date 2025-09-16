@@ -10,13 +10,7 @@ class Survey(models.Model):
         ("am","Amharic"),
         ("om","Afan Oromo")
     ]
-    # DEFAULT_KEYS = [
-    #     ('1','እጅግ በጣም ጥሩ'),
-    #     ('2', 'በጣም ጥሩ'),
-    #     ('3', 'ጥሩ'),
-    #     ('4', 'አጥጋቢ አይደለም'),
-    #     ('5', 'በጣም አጥጋቢ አይደለም')
-    # ]
+
     id = models.UUIDField(
         primary_key=True,
         default=uuid.uuid4,
@@ -37,9 +31,6 @@ class Survey(models.Model):
             self.is_active = False
         super().save(*args,**kwargs)
 
-    # @property
-    # def has_expired(self):
-    #     return timezone.now().date() >= self.end_time
     
     def __str__(self):
         return f"{self.title} ({'active' if self.is_active else 'inactive'})"
@@ -153,6 +144,7 @@ class Question(models.Model):
         blank=True
     )
     question_label = models.TextField(editable=False)
+    required = models.BooleanField(default=False)
     
     def save(self,*args,**kwargs):
         super().save(*args,**kwargs)
@@ -167,4 +159,50 @@ class Question(models.Model):
 
     def __str__(self):
         return f"Q{self.question_text[:50]}"
+    
+class SurveyResponse(models.Model):
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False
+    )
+    survey = models.ForeignKey(Survey, related_name='responses', on_delete=models.CASCADE)
+    submitted_at = models.DateTimeField(auto_now_add=True)
+    ip_address = models.GenericIPAddressField(blank=True, null=True)
+    user_agent = models.TextField(blank=True, null=True)
+    session_id = models.CharField(max_length=255, blank=True, null=True)
+    is_complete = models.BooleanField(default=True)
+    
+    class Meta:
+        ordering = ['-submitted_at']
+    
+    def __str__(self):
+        return f"Response to {self.survey.title} at {self.submitted_at}"
 
+
+class Answer(models.Model):
+    response = models.ForeignKey(SurveyResponse, related_name='answers', on_delete=models.CASCADE)
+    question = models.ForeignKey(Question, related_name='answers', on_delete=models.CASCADE)
+    
+    # For choice-based questions
+    selected_options = models.ManyToManyField(QuestionOption, blank=True)
+    
+    # For text-based questions
+    text_value = models.TextField(blank=True, null=True)
+    
+    # For rating questions
+    rating_value = models.IntegerField(blank=True, null=True)
+    
+    # For number questions
+    number_value = models.FloatField(blank=True, null=True)
+    
+    # For "Other" option custom text
+    custom_text = models.TextField(blank=True, null=True)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        unique_together = ('response', 'question')
+    
+    def __str__(self):
+        return f"Answer to {self.question.question_text[:30]}"

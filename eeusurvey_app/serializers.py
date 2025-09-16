@@ -1,6 +1,6 @@
 # serializers.py
 from rest_framework import serializers
-from .models import KeyChoice, Survey, Question, QuestionOption, QuestionCategory
+from .models import KeyChoice, Survey, Question, QuestionOption, QuestionCategory,Answer,SurveyResponse
 
 class QuestionOptionSerializer(serializers.ModelSerializer):
     class Meta:
@@ -18,10 +18,11 @@ class QuestionSerializer(serializers.ModelSerializer):
     label = serializers.CharField(source='question_label')
     category = serializers.IntegerField(source='category.id')
     options = QuestionOptionSerializer(many=True, read_only=True)
+    # required = serializers.BooleanField(source='required')
 
     class Meta:
         model = Question
-        fields = ['id', 'type', 'question','label', 'category', 'options', 'scale', 'placeholder']
+        fields = ['id', 'type', 'question','label', 'category', 'options', 'scale', 'placeholder','required']
 
 
 class KeyChoiceSerializer(serializers.ModelSerializer):
@@ -63,8 +64,22 @@ class SurveySerializer(serializers.ModelSerializer):
             'language': obj.language,
         }
 
-    # def get_survey(self, obj):
-    #     return {
-    #         'title': obj.title,
-    #         'instructions': obj.instructions,
-    #     }
+class AnswerSerializer(serializers.ModelSerializer):
+    selected_option_ids = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Answer
+        fields = ['question', 'selected_option_ids', 'text_value', 'rating_value', 
+                 'number_value', 'custom_text']
+    
+    def get_selected_option_ids(self, obj):
+        return [option.id for option in obj.selected_options.all()]
+
+
+class SurveyResponseSerializer(serializers.ModelSerializer):
+    answers = AnswerSerializer(many=True, read_only=True)
+    
+    class Meta:
+        model = SurveyResponse
+        fields = ['id', 'survey', 'submitted_at', 'answers', 'is_complete']
+

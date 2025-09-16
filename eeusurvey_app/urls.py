@@ -1,16 +1,14 @@
 # urls.py
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import SurveyViewSet
+from .views import SurveyViewSet, get_survey_analysis, submit_survey_response
+from .admin import admin_site  # instead of default admin
 
 router = DefaultRouter()
 router.register(r'surveys', SurveyViewSet)
 
-survey_list_lang = SurveyViewSet.as_view({'get': 'list_by_language'})
-survey_detail_lang = SurveyViewSet.as_view({'get': 'retrieve_by_language'})
-
 urlpatterns = [
-    # path('surveys/', survey_list_lang, name='survey-list-lang'),
-    # path('surveys/<uuid:pk>/', survey_detail_lang, name='survey-detail-lang'),
+    path('surveys/<uuid:survey_id>/analysis/', get_survey_analysis, name='survey-analysis'),
+    path('responses/submit/', submit_survey_response, name='submit-response'),
     path('', include(router.urls)),  # keeps /surveys/ and /surveys/<id>/
 ]
