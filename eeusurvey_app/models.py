@@ -129,6 +129,7 @@ class Question(models.Model):
         ('rating', 'Rating'),
         ('number', 'Number'),
         ('text', 'Text'),
+        ('email', 'Email'),
     ]
 
     id = models.BigAutoField(primary_key=True,editable=False)
@@ -145,6 +146,8 @@ class Question(models.Model):
     )
     question_label = models.TextField(editable=False)
     required = models.BooleanField(default=False)
+    min_length = models.SmallIntegerField(blank=True, null=True)
+    max_length = models.SmallIntegerField(blank=True, null=True)
     
     def save(self,*args,**kwargs):
         super().save(*args,**kwargs)
