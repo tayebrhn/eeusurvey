@@ -18,12 +18,18 @@ class QuestionSerializer(serializers.ModelSerializer):
     label = serializers.CharField(source='question_label')
     category = serializers.IntegerField(source='category.id')
     options = QuestionOptionSerializer(many=True, read_only=True)
+    constraints = serializers.SerializerMethodField()
     # required = serializers.BooleanField(source='required')
 
     class Meta:
         model = Question
-        fields = ['id', 'type', 'question','label', 'category', 'options', 'scale', 'placeholder','required']
-
+        fields = ['id', 'type', 'question','label', 'category', 'options', 'scale', 'placeholder','constraints']
+    def get_constraints(self,obj):
+        return {
+            "required":obj.required,
+            "min_length":obj.min_length,
+            "max_length":obj.max_length,
+        }
 
 class KeyChoiceSerializer(serializers.ModelSerializer):
     class Meta:
