@@ -1,7 +1,10 @@
 <!-- templates/admin/survey_analysis.html -->
-{% extends "admin/base_site.html" %} {% load admin_urls static admin_list %} {%
-block title %}Analysis for {{ survey.title }}{% endblock %} {% block breadcrumbs
-%}
+{% extends "admin/base_site.html" %} {% load admin_urls static admin_list %} 
+{% load static %}
+<script src="{% static 'js/chart.min.js' %}"></script>
+{% block title %}Analysis for {{ survey.title }}
+{% endblock %} 
+{% block breadcrumbs %}
 <div class="breadcrumbs">
   <a href="{% url 'admin:index' %}">Home</a>
   <a href="{% url 'admin:eeusurvey_app_survey_changelist' %}">Surveys</a>
@@ -132,15 +135,12 @@ block title %}Analysis for {{ survey.title }}{% endblock %} {% block breadcrumbs
         "
       >
         <h3 style="margin: 0; color: #007cba">
-          Q{{ forloop.counter }}: {{
-          question_data.question.question_text|truncatechars:100 }}
+          Q{{ forloop.counter }}: {{ question_data.question.question_text|truncatechars:100 }}
         </h3>
         <div style="margin-top: 8px; color: #6c757d; font-size: 0.9em">
-          <strong>Type:</strong> {{
-          question_data.question.get_question_type_display }} |
+          <strong>Type:</strong> {{ question_data.question.get_question_type_display }} |
           <strong>Category:</strong> {{ question_data.question.category.name }}
-          | <strong>Responses:</strong> {{ question_data.total_responses }} ({{
-          question_data.response_rate|floatformat:1 }}%)
+          | <strong>Responses:</strong> {{ question_data.total_responses }} ({{ question_data.response_rate|floatformat:1 }}%)
         </div>
       </div>
 
