@@ -86,8 +86,12 @@ WSGI_APPLICATION = 'eeusurvey.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        "NAME": "eeusurvey",
+        "USER": "eeu",
+        "PASSWORD": "eeuzxcvbnm",
+        "HOST": "localhost",
+        "PORT": "5445",
     }
 }
 
