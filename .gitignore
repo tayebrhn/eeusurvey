@@ -3,3 +3,4 @@ eeusurvey_app/__pycache__/
 eeusurvey/__pycache__/
 eeusurvey_app/migrations/
 eeuenv/
+.env

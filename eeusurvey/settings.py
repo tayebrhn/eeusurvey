@@ -12,10 +12,18 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 import os
 from pathlib import Path
+import environ
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+env= environ.Env(DEBUG = (bool,False))
+
+env_file = os.path.join(BASE_DIR, ".env")
+if os.environ.get("DJANGO_ENV") == "production":
+    env_file = os.path.join(BASE_DIR, ".env.production")
+
+environ.Env.read_env(env_file)
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
@@ -24,9 +32,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure--d!j@!3q_l(bb0_#w=&j(9^lcda9ou@s1pu8isa9ry40z_olo='
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env("DEBUG")
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = env.list("ALLOWED_HOSTS")
 
 
 # Application definition
@@ -86,12 +94,17 @@ WSGI_APPLICATION = 'eeusurvey.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        "NAME": "eeusurvey",
-        "USER": "eeu",
-        "PASSWORD": "eeuzxcvbnm",
-        "HOST": "localhost",
-        "PORT": "5445",
+        'ENGINE': 'django.db.backends.mysql',
+        "NAME": env("DB_NAME"),
+        "USER": env("DB_USER"),
+        "PASSWORD": env("DB_PASSWORD"),
+        "HOST": env("DB_HOST"),
+        "PORT": env("DB_PORT"),
+        'OPTIONS': {
+            'charset': 'utf8mb4',
+            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'"
+        }
+
     }
 }
 

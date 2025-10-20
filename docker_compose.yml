@@ -16,18 +16,32 @@ services:
   #     - db
   #   restart: always
 
-  db:
-    image: postgres:latest
-    container_name: eeupg
+  # db:
+  #   image: postgres:latest
+  #   container_name: eeupg
+  #   environment:
+  #     POSTGRES_USER: eeu
+  #     POSTGRES_PASSWORD: eeuzxcvbnm
+  #     POSTGRES_DB: eeusurvey
+  #   ports:
+  #     - "5445:5432"
+  #   volumes:
+  #     - pgdata2:/var/lib/postgresql/data
+  #   restart: always
+  db_mysql:
+    image: mysql:oraclelinux9
+    container_name: eeudbmysql
     environment:
-      POSTGRES_USER: eeu
-      POSTGRES_PASSWORD: eeuzxcvbnm
-      POSTGRES_DB: eeusurvey
+      MYSQL_ROOT_PASSWORD: eeuzxcvbnm
+      MYSQL_DATABASE: eeusurvey
+      MYSQL_USER: eeumysql
+      MYSQL_PASSWORD: eeuzxcvbnm
     ports:
-      - "5445:5432"
+      - "3306:3306"
     volumes:
-      - pgdata2:/var/lib/postgresql/data
+      - mysql_data:/var/lib/mysql
     restart: always
 
 volumes:
-  pgdata2:
+    mysql_data:
+
